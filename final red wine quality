@@ -1,0 +1,39 @@
+url <- "https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv"
+ data<- read.csv(url,header = TRUE,sep = ";")
+ for(i in c(1:11)){
++     +     + plot(data[,i],jitter(data[,12]),xlab = names(data)[i],ylab = "quality",abline(lm(data[,12]~data[,i],lty = 2,lwd =2)))}
+ cor.dat<-cor(data)
+ library(corrplot)
+corrplot(cor.dat,method = "number")
+library(dplyr)
+ train<-sample_frac(data,0.8)
+ sid<-as.numeric(rownames(train))
+ test<-data[-sid]
+ train$quality<-factor(train$quality,ordered = TRUE)
+ test$quality<-factor(test$quality,ordered = TRUE)
+test<-data[-sid,]
+ test$quality<-factor(test$quality,ordered = TRUE)
+ library(randomForest)
+ rf<-randomForest(quality~.,data = train)
+ plot(rf)
+ ee<-tuneRF(train[,-12],train[,12],stepFactor = 0.9,plot = TRUE,ntreeTry = 200,trace = TRUE,improve = 0.05)
+ ter<-randomForest(quality~.,data = train,ntree = 200,mtry = 3,importance = TRUE)
+ varImpPlot(ter,sort = TRUE)
+ importance(ter)
+ y_pred<-predict(ter,test[,-12])
+ table(test[,12],y_pred)
+library(caret)
+ confusionMatrix(test[,12],y_pred)
+ library(e1071)
+ tuned_parameter<- tune.svm(quality~.,data = train,gamma = 10^(-5:1),cost = 10^(-3:1))
+ tuned_parameter
+ svm1<-svm(quality~.,data = train,method = "c-classification",kernel = "radial",gamma = 1,cost = 10)
+ y1_pred<-predict(svm1,test[-12])
+ table(test[,12],y1_pred)
+ confusionMatrix(test[,12],y1_pred)
+ library(Boruta)
+ boruta<- Boruta(quality~.,data = train,doTrace = 2,maxRuns = 500)
+final.boruta<- TentativeRoughFix(boruta)
+getSelectedAttributes(final.boruta,withTentative = FALSE)
+
+ 
